@@ -17,8 +17,8 @@ func (this *Example) Test(info nrpc.RPCGateRequest, reply *int) error{
 	response.Data = []byte("你好呀111")
 
 	var rreply int
-	var rs = this.context.gateRPC.Call("GateProxy.Reply", response, &rreply)
-	log.Println(rs)
+	this.context.gateRPC.Call("GateProxy.Reply", response, &rreply)
+
 	*reply = 100
 	return nil
 }
@@ -31,8 +31,8 @@ func (this *Example) Login(info nrpc.RPCGateRequest, reply *int) error{
 	response.Data = []byte("什么哦2222")
 
 	var rreply int
-	var rs = this.context.gateRPC.Call("GateProxy.Reply", response, &rreply)
-	log.Println(rs)
+	this.context.gateRPC.Call("GateProxy.Reply", response, &rreply)
+
 	*reply = 100
 	return nil
 }
