@@ -43,7 +43,7 @@ func (this *TCPTransporter) start() {
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println("启动 TCP", this.hostPort)
+	log.Println("xx启动 TCP", this.hostPort)
 	defer l.Close()
 	defer log.Println("Close TCP Server")
 	defer this.releaseSessions()

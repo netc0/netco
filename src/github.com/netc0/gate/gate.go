@@ -4,16 +4,18 @@ import (
 	"flag"
 	"os"
 	"github.com/netc0/netco/app"
-	"github.com/netc0/gate/services"
 	"github.com/netc0/gate/modle"
 	"github.com/netc0/gate/rpc"
-	"github.com/netc0/netco/connector"
+	"github.com/netc0/gate/services/frontend"
+	"github.com/netc0/gate/services/backend"
 )
 
 type AppArgs struct  {
 	help    bool
 	RPCAuth string
 	RPCHost string
+
+	TCPHost string
 }
 
 var (
@@ -25,6 +27,8 @@ func parseArgs() {
 	flag.BoolVar(&appArgs.help, "h", false, "显示帮助")
 	flag.StringVar(&appArgs.RPCAuth, "k", "netc0", "RPC 验证码")
 	flag.StringVar(&appArgs.RPCHost, "r", ":9002", "RPC Host")
+
+	flag.StringVar(&appArgs.TCPHost, "t", ":9000", "TCP Host")
 	flag.Parse()
 }
 
@@ -36,7 +40,7 @@ func processArgs() {
 }
 
 func setupFrontend(config* modle.FrontendConfig) {
-	config.Host = ":9000"
+	config.TCPHost = ":9000"
 }
 func setupBackend(config* modle.BackendConfig) {
 	config.Host = appArgs.RPCHost
@@ -55,14 +59,18 @@ func startApp () {
 	setupBackend(&backendConfig)
 
 	//services.StartEventService(instance) // 事件服务
-	services.StartFrontendSerice(&context, &frontendConfig) // 前端服务
-	services.StartBackendService(&context, &backendConfig, getSessionCallback) // 后端服务
-
+	frontend.StartFrontendSerice(&frontendConfig) // 前端服务
+	frontend.SetDispatchBackendCallback(DispatchBackend)
+	backend.StartBackendService(&context, &backendConfig, getSessionCallback) // 后端服务
 	context.Start()
 }
 
-func getSessionCallback(sid string) *connector.Session{
-	return services.GetTCPSession(sid)
+func DispatchBackend(s interface{}, requestId uint32, routeId uint32, data []byte) {
+	backend.BackendServiceDispatch(s, requestId, routeId, data);
+}
+
+func getSessionCallback(sid string) interface{}{
+	return frontend.GetSession(sid)
 }
 
 func main() {

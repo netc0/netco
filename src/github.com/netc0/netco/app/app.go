@@ -62,7 +62,7 @@ func (this *App) SetRPCServerHost(RPCHost string, RPCHandler interface{}) {
 }
 
 func (this *App) Start () {
-	go this.startTCPServer()
+	//go this.startTCPServer()
 	go this.startRPCServer()
 	log.Println("App启动完成")
 	for {

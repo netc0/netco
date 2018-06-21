@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 	"fmt"
-	"github.com/netc0/netco/connector"
 	"hash/crc32"
+	"github.com/netc0/gate/services/frontend"
 )
 
 type BackendInfo struct{
@@ -22,13 +22,13 @@ type GateProxy struct {
 	AuthCode string
 	Backends map[string]*BackendInfo
 	backendLock *sync.Mutex
-	getSessionCallback func (string)(*connector.Session)
+	getSessionCallback func (string)(interface{})
 	backendCache map[uint32]string // crc -> backend name
 	backendRoute map[uint32]string // crc -> route
 }
 
 //
-func NewGateProxy(getSessionCallback func (string)(*connector.Session)) *GateProxy {
+func NewGateProxy(getSessionCallback func (string)(interface{})) *GateProxy {
 	var v GateProxy
 	v.init()
 	v.getSessionCallback = getSessionCallback
@@ -110,19 +110,29 @@ func (this *GateProxy) addBackend(info nrpc.RPCBackendInfo) error {
 
 // 回复客户端
 func (this *GateProxy) reply(info nrpc.RPCGateResponse) error {
-	var session = this.getSession(info.ClientId)
-	if session == nil {
+	var s = this.getSession(info.ClientId)
+	session, ok := s.(frontend.ISession)
+
+	if session == nil || ok == false {
 		return errors.New("Client session not found.")
 	}
-	session.Response(connector.PacketType_DATA, info.RequestId, info.Data)
+	//session.Response(connector.PacketType_DATA, info.RequestId, info.Data)
+	session.Response(info.RequestId, info.Data)
 	return nil
+
 }
 func (this *GateProxy) push(info nrpc.RPCGateResponse) error {
-	var session = this.getSession(info.ClientId)
+	var s = this.getSession(info.ClientId)
+	session, ok := s.(frontend.ISession)
+
+	if session == nil || ok == false {
+		return errors.New("Client session not found.")
+	}
 	if session == nil {
 		return errors.New("Client session not found.")
 	}
-	session.Push(connector.PacketType_PUSH, info.Data)
+	//session.Push(connector.PacketType_PUSH, info.Data)
+	session.Push(info.Data)
 	return nil
 }
 
@@ -132,7 +142,7 @@ func (this *GateProxy) getBackend(name string) *BackendInfo {
 	return this.Backends[name]
 }
 // 获取客户端
-func (this *GateProxy) getSession(name string) *connector.Session {
+func (this *GateProxy) getSession(name string) interface{} {
 	return this.getSessionCallback(name)
 }
 
