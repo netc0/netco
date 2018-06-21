@@ -27,12 +27,10 @@ func RPCServerStart(host string, rscv interface{}) error {
 }
 
 func RPCClientConnect(host string) (*rpc.Client, error){
-	cli, err := rpc.Dial("tcp", "127.0.0.1:9001")
+	cli, err := rpc.Dial("tcp", host)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
-
 	return cli, nil
 }
 

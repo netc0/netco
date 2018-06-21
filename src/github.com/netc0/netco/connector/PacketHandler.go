@@ -2,7 +2,6 @@ package connector
 
 import (
 	"time"
-	"log"
 )
 
 func (s *Session) procPacket(packet Packet) int {
@@ -47,7 +46,7 @@ func (this *Session) procData(packet Packet) {
 	var requestId uint32
 	var routeId uint32
 	var data = packet.Body
-	log.Println(data)
+
 	requestId = uint32(
 		uint32(data[0]) << 24 |
 		uint32(data[1]) << 16 |

@@ -1,38 +1,35 @@
-package main
+package modle
 
 import (
-	"github.com/netc0/netco/nrpc"
-	"log"
-	"net/rpc"
-	"github.com/netc0/netco/connector"
-	"hash/crc32"
 	"github.com/netc0/netco/app"
+	"github.com/netc0/netco/nrpc"
+	"net/rpc"
+	"hash/crc32"
+	"log"
 	"errors"
+	"github.com/netc0/netco/connector"
 )
 
-type GateRPCRecord struct {
-	remote string
-	client *rpc.Client
-	routes []string
-}
-
 type GateProxy struct {
-	routeIds map[uint32]string
-	routeNames map[string]*GateRPCRecord
-	app *app.App
+	RouteIds map[uint32]string
+	RouteNames map[string]*GateRPCRecord
+	Context *app.App
 }
 
-func (this *GateProxy) init () {
-	this.routeIds = make(map[uint32]string)
-	this.routeNames = make(map[string]*GateRPCRecord)
+func (this *GateProxy) Init () {
+	this.RouteIds = make(map[uint32]string)
+	this.RouteNames = make(map[string]*GateRPCRecord)
 }
 
 func (this* GateProxy) AddRoute(info nrpc.RPCAddRouteInfo, reply *int) error {
+	if info.Auth != "1111" {
+		return errors.New("Auth code error")
+	}
 	*reply = 1
 	// 注册 RPC
-	delete(this.routeNames, info.RCPRemote)
+	delete(this.RouteNames, info.RCPRemote)
 	var item = &GateRPCRecord{}
-	this.routeNames[info.RCPRemote] = item
+	this.RouteNames[info.RCPRemote] = item
 	// 尝试连接 RPC
 	client, err := rpc.Dial("tcp", info.RCPRemote)
 	if err != nil {
@@ -43,13 +40,14 @@ func (this* GateProxy) AddRoute(info nrpc.RPCAddRouteInfo, reply *int) error {
 
 	for _, r := range info.Routes {
 		var crc = crc32.ChecksumIEEE([]byte(r))
-		this.routeNames[r] = item
-		this.routeIds[crc] = r
+		this.RouteNames[r] = item
+		this.RouteIds[crc] = r
 	}
 	item.routes = append(item.routes, info.Routes...)
 	log.Println("注册 RPC Route", info)
 	return nil
 }
+
 
 func (this* GateProxy) Reply(info nrpc.RPCGateResponse, reply *int) error {
 	// 回复客户端
@@ -64,16 +62,17 @@ func (this* GateProxy) Reply(info nrpc.RPCGateResponse, reply *int) error {
 	return nil
 }
 
+
 func (this *GateProxy) getBackend(routeName string)* GateRPCRecord{
-	return this.routeNames[routeName]
+	return this.RouteNames[routeName]
 }
 
 func (this *GateProxy) getRouteName(routeId uint32) string {
-	return this.routeIds[routeId]
+	return this.RouteIds[routeId]
 }
 
 // 分发消息到后端
-func (this *GateProxy) dispatchRequest(session *connector.Session, requestId uint32, routeId uint32, data []byte) {
+func (this *GateProxy) DispatchRequest(session *connector.Session, requestId uint32, routeId uint32, data []byte) {
 	msg := nrpc.RPCGateRequest{}
 	msg.RequestId = requestId
 	msg.RouteId  = routeId
@@ -93,5 +92,5 @@ func (this *GateProxy) dispatchRequest(session *connector.Session, requestId uin
 }
 
 func (this *GateProxy) getSession(id string) (*connector.Session){
-	return this.app.GetTCPSession(id)
+	return this.Context.GetTCPSession(id)
 }

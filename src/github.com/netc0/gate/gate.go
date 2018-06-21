@@ -1,26 +1,29 @@
 package main
 
 import (
-	"github.com/netc0/netco/events"
-	"log"
 	"flag"
 	"os"
 	"github.com/netc0/netco/app"
+	"github.com/netc0/gate/services"
+	"github.com/netc0/gate/modle"
+	"github.com/netc0/gate/rpc"
 	"github.com/netc0/netco/connector"
 )
 
-const HELLO_WORLD = "helloworld"
-
 type AppArgs struct  {
-	help bool
+	help    bool
+	RPCAuth string
 }
 
 var (
 	appArgs AppArgs
+	instance *modle.GateProxy
+	proxy *rpc.GateProxy
 )
 
 func parseArgs() {
 	flag.BoolVar(&appArgs.help, "h", false, "显示帮助")
+	flag.StringVar(&appArgs.RPCAuth, "k", "netc0", "RPC 验证码")
 	flag.Parse()
 }
 
@@ -31,55 +34,38 @@ func processArgs() {
 	}
 }
 
-// 发送消息
-type HelloWorld struct {
-	Name string
+func setupFrontend(config* modle.FrontendConfig) {
+	config.Host = ":9000"
 }
-
-type GoodBye struct {
-	Name string
+func setupBackend(config* modle.BackendConfig) {
+	config.Host = ":9001"
+	config.Auth = "12345"
 }
-
-var instance *GateProxy
 
 func startApp () {
-	var gateApp = app.NewApp()
-	instance = new(GateProxy)
-	instance.init()
-	instance.app = &gateApp
-	gateApp.SetTCPServerHost(":9000", TCPHandler) // 启动 TCP 服务器
-	gateApp.SetRPCServerHost(":9001", instance) // 启动 RPC 服务器
+	var context = app.NewApp()
 
-	gateApp.OnTCPDataCallback = OnTCPData
+	// 前端配置参数
+	var frontendConfig modle.FrontendConfig
+	setupFrontend(&frontendConfig)
 
-	listener := events.NewEventListener(myHandler)
-	gateApp.EventDispatcher.AddEventListener(HELLO_WORLD, listener)
+	// 后端配置
+	var backendConfig modle.BackendConfig
+	setupBackend(&backendConfig)
 
-	gateApp.EventDispatcher.DispatchEvent(events.NewEvent(HELLO_WORLD, HelloWorld{Name:"Hello"}))
-	gateApp.EventDispatcher.DispatchEvent(events.NewEvent(HELLO_WORLD, GoodBye{Name:"Bye"}))
+	//services.StartEventService(instance) // 事件服务
+	services.StartFrontendSerice(&context, &frontendConfig) // 前端服务
+	services.StartBackendService(&context, &backendConfig, getSessionCallback) // 后端服务
 
-	gateApp.Start()
+	context.Start()
+}
+
+func getSessionCallback(sid string) *connector.Session{
+	return services.GetTCPSession(sid)
 }
 
 func main() {
 	parseArgs()   // 解析参数
 	processArgs() // 处理参数
 	startApp()    // 启动
-}
-
-func TCPHandler(event events.Event) {
-
-}
-
-func myHandler(event events.Event) {
-	var hw, ok = event.Object.(HelloWorld)
-	if ok {
-		log.Println(event.Type, hw, event.Target)
-	} else {
-		log.Println("event message error", event.Type, event.Object, event.Target)
-	}
-}
-
-func OnTCPData(session *connector.Session, requestId uint32, routeId uint32, data []byte) {
-	instance.dispatchRequest(session, requestId, routeId, data)
 }

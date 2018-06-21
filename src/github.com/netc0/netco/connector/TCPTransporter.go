@@ -10,7 +10,7 @@ type TCPTransporter struct{
 	hostPort string
 	running bool
 	sessions map[string]*Session
-	onNewConnection func(string)
+	onNewConnection func(string, *Session)
 	onCloseConnection func(string)
 	onConnectionData func(*Session, uint32, uint32, []byte)
 }
@@ -27,7 +27,7 @@ func CreateTCPConnector(hostPort string) *TCPTransporter {
 }
 
 func (this *TCPTransporter) Start(
-	onNewConnection func(string),
+	onNewConnection func(string, *Session),
 	onCloseConnection func(string),
 	onConnectionData func(*Session, uint32, uint32, []byte)) {
 		// 设置回调
@@ -79,7 +79,7 @@ func (this *TCPTransporter) handleConnection(conn net.Conn) {
 	session.heartBeatTime = time.Now() // 更新心跳包
 	session.ok = true
 	session.transporter = this
-	this.onNewConnection(session.id)
+	this.onNewConnection(session.id, session)
 
 	for {
 		if !session.ok {

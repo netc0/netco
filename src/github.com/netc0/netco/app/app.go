@@ -16,6 +16,8 @@ type App struct {
 	aRPCHost        string
 	aRPCHandler     interface{}
 
+	OnTCPNewConnection func(id string, session *connector.Session)
+	OnTCPCloseConnection func(id string)
 	OnTCPDataCallback func(session *connector.Session, requestId uint32, routeId uint32, data []byte)
 }
 
@@ -35,8 +37,8 @@ func (this *App) SetTCPServerHost(TCPHost string, handler events.EventHandler) {
 func (this *App) startTCPServer() {
 	this.aTCPTransporter = connector.CreateTCPConnector(this.aTCPHost)
 	this.aTCPTransporter.Start(
-		func(s string) {
-			this.onTCPNewConnection(s)
+		func(id string, session *connector.Session) {
+			this.onTCPNewConnection(id, session)
 		},
 		func(s string) {
 			this.onTCPCloseConnection(s)
@@ -68,21 +70,23 @@ func (this *App) Start () {
 }
 
 // tcp 新连接进入
-func (this *App) onTCPNewConnection(id string) {
-	 log.Println("欢迎新连接", id)
+func (this *App) onTCPNewConnection(id string, session *connector.Session) {
+	if this.OnTCPNewConnection != nil {
+		this.OnTCPNewConnection(id, session)
+	}
 }
 
 // tcp 关闭连接
 func (this *App) onTCPCloseConnection(id string) {
-	log.Println("再见连接", id)
+	if this.OnTCPCloseConnection != nil {
+		this.OnTCPCloseConnection(id)
+	}
 }
 
 // tcp 新数据进入, data为transporter完整的packet数据
 func (this *App)onTCPData(session *connector.Session, requestId uint32, routeId uint32, data []byte) {
 	log.Println("连接数据", "RequestId:", requestId, " routeId:", routeId, " Data:" , string(data))
 	this.OnTCPDataCallback(session, requestId, routeId, data)
-
-	session.Response(connector.PacketType_DATA, requestId, []byte("world111"))
 }
 
 func (this *App) GetTCPSession(id string) (*connector.Session) {
