@@ -13,17 +13,18 @@ import (
 type AppArgs struct  {
 	help    bool
 	RPCAuth string
+	RPCHost string
 }
 
 var (
 	appArgs AppArgs
-	instance *modle.GateProxy
 	proxy *rpc.GateProxy
 )
 
 func parseArgs() {
 	flag.BoolVar(&appArgs.help, "h", false, "显示帮助")
 	flag.StringVar(&appArgs.RPCAuth, "k", "netc0", "RPC 验证码")
+	flag.StringVar(&appArgs.RPCHost, "r", ":9002", "RPC Host")
 	flag.Parse()
 }
 
@@ -38,8 +39,8 @@ func setupFrontend(config* modle.FrontendConfig) {
 	config.Host = ":9000"
 }
 func setupBackend(config* modle.BackendConfig) {
-	config.Host = ":9001"
-	config.Auth = "12345"
+	config.Host = appArgs.RPCHost
+	config.Auth = appArgs.RPCAuth
 }
 
 func startApp () {

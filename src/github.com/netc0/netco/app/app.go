@@ -11,6 +11,7 @@ import (
 type App struct {
 	EventDispatcher *events.EventDispatcher
 	aTCPTransporter *connector.TCPTransporter
+
 	aTCPHost        string
 	aTCPHander 		events.EventHandler
 	aRPCHost        string
@@ -30,7 +31,7 @@ func NewApp() App {
 	return app
 }
 
-func (this *App) SetTCPServerHost(TCPHost string, handler events.EventHandler) {
+func (this *App) SetTCPServerHost(TCPHost string) {
 	this.aTCPHost = TCPHost
 }
 

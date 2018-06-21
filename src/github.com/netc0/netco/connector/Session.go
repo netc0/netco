@@ -12,6 +12,7 @@ type Session struct {
 	reader        PacketReader
 	heartBeatTime time.Time
 	transporter   *TCPTransporter
+	aUDPTransporter   *UDPTransporter
 	ok             bool
 }
 
