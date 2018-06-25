@@ -23,6 +23,9 @@ type ISession interface {
 	send([]byte)            // 发送数据
 
 	onDataPacket([]byte)    // 收到data包
+
+	GetOwner() interface{} // 获取 owner
+	SetOwner(interface{})  // 设置 owner
 }
 
 type Session struct {
@@ -33,6 +36,8 @@ type Session struct {
 	reader connector.PacketReader
 	time   time.Time // 心跳
 	OnDataPacket func(interface{}, uint32, uint32, []byte)
+
+	owner interface{}
 }
 
 type TCPSession struct {
@@ -144,4 +149,12 @@ func (this* Session) onDataPacket(data []byte) {
 func (this* TCPSession) send(data[]byte) {
 	b, err := this.conn.Write(data)
 	log.Println(b, err)
+}
+// 获取 owner
+func (this* Session) GetOwner() interface{} {
+	return this.owner
+}
+// 设置 owner
+func (this* Session) SetOwner(owner interface{}) {
+	this.owner = owner
 }

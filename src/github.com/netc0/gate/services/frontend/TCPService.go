@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 func (this *TCPTransporter) start() {
 	this.running = true
 	var l, err = net.Listen("tcp", this.Host)
@@ -40,7 +39,7 @@ func (this *TCPTransporter) start() {
 }
 
 func (this *TCPTransporter) releaseSessions(){
-	ClearSession()
+	ClearSession(this)
 }
 
 func (this *TCPTransporter) checkHeartBeat() {
@@ -71,20 +70,6 @@ func (this *TCPTransporter) handleConnection(conn net.Conn) {
 	session.holder = session
 	session.id = conn.RemoteAddr().String()
 	AddSession(&session)       // 新增会话
-
-	//var session = NewSession(new(TCPSession))
-	//var session = NewSession(conn)
-	//this.sessions[session.id] = session
-	//
-	//defer session.onClose()
-	//defer this.onCloseConnection(session.id)
-	//defer log.Println("Close session", session.id)
-	//
-	//session.heartBeatTime = time.Now() // 更新心跳包
-	//session.ok = true
-	//session.transporter = this
-	//this.onNewConnection(session.id, session)
-	//
 
 	for {
 		if !session.IsOk() {

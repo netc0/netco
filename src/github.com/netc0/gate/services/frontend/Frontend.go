@@ -9,20 +9,13 @@ import (
 
 // define
 
-
-//func NewSession(inst interface{}) *ISession{
-//	var ptr interface{}
-//	ptr = inst
-//
-//}
-
 func (this* TCPSession) IsOk() bool {
 	return this.isOk
 }
 
 
-func SessionHandleByte(s *ISession, data []byte) {
-
+func SessionHandleByte(s ISession, data []byte) {
+	s.HandleBytes(data)
 }
 
 var (
@@ -34,23 +27,13 @@ var (
 	DispatchBackendCallback func(s interface{}, requestId uint32, routeId uint32, data []byte)
 )
 
-type ITransporter interface {
-	start()
-	releaseSessions()
-	checkHeartBeat()
-}
-
-type Transporter struct {
-	ITransporter
-	running bool   // 是否在运行中
-	Host    string // 绑定的Host
-	OnDataPacket func(interface{}, uint32, uint32, []byte) // 收到消息
-}
-
 type TCPTransporter struct {
 	Transporter
 }
 
+type UDPTransporter struct {
+	Transporter
+}
 
 func NewTransporter(inst interface{}) Transporter{
 	var ptr = inst.(*Transporter)
@@ -68,9 +51,6 @@ func StartFrontendSerice(config* modle.FrontendConfig) {
 
 	sessions = make(map[string]ISession)
 	sessionMutex = new(sync.Mutex)
-	//context.SetTCPServerHost(config.TCPHost) // 启动 TCP 服务器
-	//context.OnTCPDataCallback = OnTCPData
-	//context.OnTCPNewConnection = OnTCPNewConnection
 
 	if config.TCPHost != "" {
 		var tcp TCPTransporter
@@ -87,10 +67,6 @@ func StartFrontendSerice(config* modle.FrontendConfig) {
 
 func SetDispatchBackendCallback(callback func(session interface{}, requestId uint32, routeId uint32, data []byte)) {
 	DispatchBackendCallback = callback
-}
-
-func OnTCPData(session *connector.Session, requestId uint32, routeId uint32, data []byte) {
-	//BackendServiceDispatch(session, requestId, routeId, data)
 }
 
 func OnTCPNewConnection(sid string, session *connector.Session) {
@@ -112,11 +88,13 @@ func GetSession(sid string) ISession {
 }
 
 // 清空会话
-func ClearSession() {
+func ClearSession(owner interface{}) {
 	sessionMutex.Lock()
 	defer sessionMutex.Unlock()
-	for k, _ := range sessions {
-		delete(sessions, k)
+	for k, v := range sessions {
+		if v.GetOwner() == owner {
+			delete(sessions, k)
+		}
 	}
 }
 
