@@ -26,6 +26,8 @@ type ISession interface {
 
 	GetOwner() interface{} // 获取 owner
 	SetOwner(interface{})  // 设置 owner
+
+	AddCloseEventListener(func(session ISession))
 }
 
 type Session struct {
@@ -38,12 +40,21 @@ type Session struct {
 	OnDataPacket func(interface{}, uint32, uint32, []byte)
 
 	owner interface{}
+
+	closeEventListeners []func(ISession)
 }
 
 type TCPSession struct {
 	Session
 	conn net.Conn
 }
+
+type UDPSession struct {
+	Session
+	remote *net.UDPAddr
+	conn *net.UDPConn
+}
+
 // 获取 ID
 func (this *Session)GetId() string { return this.id }
 // 设置 ID
@@ -84,8 +95,16 @@ func (this *Session)Close(){
 	case TCPSession:
 		log.Println("close tcp conn")
 		t.conn.Close()
+	case UDPSession:
+		log.Println("close udp conn")
+
 		break
 	}
+
+	for _, callback := range this.closeEventListeners {
+		callback(this)
+	}
+
 	RemoveSession(this)
 }
 // 状态是否正常
@@ -114,13 +133,15 @@ func (this *Session)HandlePacket(packet connector.Packet) int {
 func (this* Session) send(data[]byte) {
 	switch t := this.holder.(type){
 	default:
-		log.Println("?????????????????????????????", this.holder)
+		log.Println("Unknow session", this.holder)
 	case TCPSession:
 		t.send(data)
 		break
+	case UDPSession:
+		t.send(data)
 	}
 }
-//
+// 收到数据包
 func (this* Session) onDataPacket(data []byte) {
 	// [requestId] [routeId] [data]
 	// 1. 解析出requestId
@@ -144,12 +165,25 @@ func (this* Session) onDataPacket(data []byte) {
 		this.OnDataPacket(this, requestId, routeId, data)
 	}
 }
-
-
+// 关闭会话的回调
+func (this*Session) AddCloseEventListener(callback func(session ISession)) {
+	this.closeEventListeners = append(this.closeEventListeners, callback)
+}
+// 发送 TCP 消息
 func (this* TCPSession) send(data[]byte) {
 	b, err := this.conn.Write(data)
-	log.Println(b, err)
+	if err != nil {
+		log.Println("tcp write: ", b, err)
+	}
 }
+// 发送 UDP 消息
+func (this* UDPSession) send(data[]byte) {
+	b, err := this.conn.WriteToUDP(data, this.remote)
+	if err != nil {
+		log.Println("udp write", b, err)
+	}
+}
+
 // 获取 owner
 func (this* Session) GetOwner() interface{} {
 	return this.owner

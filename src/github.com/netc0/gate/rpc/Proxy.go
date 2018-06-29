@@ -58,9 +58,15 @@ func (this *GateProxy) RegisterBackend(info nrpc.RPCBackendInfo, reply* int) err
 	}
 	return this.addBackend(info)
 }
+
 // RPC 回复
 func (this *GateProxy) Reply(info nrpc.RPCGateResponse, reply* int) error {
 	return this.reply(info)
+}
+
+// 通用消息
+func (this *GateProxy) OnMessage(info nrpc.RPCMessage, reply* int) error {
+	return this.onMessage(info)
 }
 
 // BackendHeartBeat
@@ -178,5 +184,31 @@ func DispatchRequest(this *GateProxy, msg nrpc.RPCGateRequest) error {
 		return errors.New(fmt.Sprintf("Backend Invoke Error:%v", rs.Error()))
 	}
 
+	return nil
+}
+
+func (this *GateProxy) onMessage(msg nrpc.RPCMessage) error {
+	if msg.AuthCode != this.AuthCode {
+		return errors.New("AuthCode error")
+	}
+	if msg.Command == 1 { // 会话关闭时需要通知我
+		sid := string(msg.Value)
+		log.Println("如果", sid, "关闭了 请告诉我")
+
+		session := frontend.GetSession(sid)
+		if session != nil {
+			session.AddCloseEventListener(func(session frontend.ISession) {
+				log.Println("会话关闭啦..........")
+				backend := this.getBackend(msg.ResponseNodeName)
+				if backend != nil {
+					var req nrpc.RPCMessage
+					req.Value = []byte(sid)
+					req.AuthCode = msg.ResponseAuthCode
+					var r int
+					backend.client.Call(msg.ResponseRoute, req, &r)
+				}
+			})
+		}
+	}
 	return nil
 }

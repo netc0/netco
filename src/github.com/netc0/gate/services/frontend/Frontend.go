@@ -13,11 +13,6 @@ func (this* TCPSession) IsOk() bool {
 	return this.isOk
 }
 
-
-func SessionHandleByte(s ISession, data []byte) {
-	s.HandleBytes(data)
-}
-
 var (
 	allSessions map[string]*connector.Session
 	tcp TCPTransporter
@@ -25,6 +20,9 @@ var (
 	sessions map[string]ISession
 	sessionMutex *sync.Mutex
 	DispatchBackendCallback func(s interface{}, requestId uint32, routeId uint32, data []byte)
+
+	onNewSession func(sid string)
+	onCloseSession func(sid string)
 )
 
 type TCPTransporter struct {
@@ -33,16 +31,6 @@ type TCPTransporter struct {
 
 type UDPTransporter struct {
 	Transporter
-}
-
-func NewTransporter(inst interface{}) Transporter{
-	var ptr = inst.(*Transporter)
-	return *ptr
-}
-
-func StartTrasnsporter(inst interface{}) {
-	var ptr = inst.(*Transporter)
-	(*ptr).start()
 }
 
 // 启动前端服务
@@ -63,21 +51,23 @@ func StartFrontendSerice(config* modle.FrontendConfig) {
 			tcp.start()
 		}()
 	}
+
+	if config.UDPHost != "" {
+		var udp UDPTransporter
+		udp.Host = config.UDPHost
+		udp.OnDataPacket = func(s interface{}, requestId uint32, routeId uint32, data []byte) {
+			DispatchBackend(s, requestId, routeId, data)
+		}
+
+		go func() {
+			udp.start()
+		}()
+	}
 }
 
+// 设置session 转发回调
 func SetDispatchBackendCallback(callback func(session interface{}, requestId uint32, routeId uint32, data []byte)) {
 	DispatchBackendCallback = callback
-}
-
-func OnTCPNewConnection(sid string, session *connector.Session) {
-	allSessions[sid] = session
-}
-
-func GetTCPSession(sid string) *connector.Session {
-	sessionMutex.Lock()
-	defer sessionMutex.Unlock()
-	var s = allSessions[sid]
-	return s
 }
 
 func GetSession(sid string) ISession {
@@ -113,8 +103,9 @@ func AddSession(inst interface{}) {
 
 	session, ok := inst.(ISession)
 	if ok {
+		log.Println("新连接进入", session.GetId(), session.GetOwner())
 		sessions[session.GetId()] = session
-		log.Println("cast to ISession ok")
+		//log.Println("cast to ISession ok")
 		return
 	}
 
@@ -124,7 +115,7 @@ func AddSession(inst interface{}) {
 func RemoveSession(inst interface{}) {
 	sessionMutex.Lock()
 	defer sessionMutex.Unlock()
-	log.Println("关闭会话", inst)
+	log.Println("Frontend关闭会话", inst)
 	session, ok := inst.(ISession)
 	if ok {
 		delete(sessions, session.GetId())
@@ -133,6 +124,6 @@ func RemoveSession(inst interface{}) {
 
 // 传递消息到后端
 func DispatchBackend(s interface{}, requestId uint32, routeId uint32, data []byte) {
-	log.Println("收到数据:",requestId, routeId, string(data))
+	//log.Println("收到数据:",requestId, routeId, string(data))
 	DispatchBackendCallback(s, requestId, routeId, data)
 }

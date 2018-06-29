@@ -38,25 +38,6 @@ func (this *TCPTransporter) start() {
 	}
 }
 
-func (this *TCPTransporter) releaseSessions(){
-	ClearSession(this)
-}
-
-func (this *TCPTransporter) checkHeartBeat() {
-	var die []ISession
-	ForeachSession(func(s ISession) {
-		if s.IsTimeout() {
-			die = append(die, s)
-		}
-	})
-
-	for _, s := range die{
-		log.Println("session:", s, "失去心跳")
-		s.Kick()  // 踢下线
-		s.Close() //关闭
-	}
-}
-
 func (this *TCPTransporter) handleConnection(conn net.Conn) {
 	var session TCPSession
 

@@ -34,3 +34,13 @@ type RPCBackendInfo struct {
 	Routes []string
 	Auth      string
 }
+
+// RPC 消息
+type RPCMessage struct {
+	Command  int
+	AuthCode string
+	Value    []byte
+	ResponseNodeName string
+	ResponseRoute    string
+	ResponseAuthCode string
+}

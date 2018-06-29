@@ -31,7 +31,7 @@ func connectGate(context *ExampleContext) {
 		return
 	}
 
-	cli, err := nrpc.RPCClientConnect("127.0.0.1:9001")
+	cli, err := nrpc.RPCClientConnect("127.0.0.1:9002")
 	if err != nil {
 		log.Println(err)
 		return
@@ -77,12 +77,11 @@ func gateHeartBeat(context *ExampleContext) {
 	}
 }
 
-
 func main() {
 	var ctx ExampleContext
 	ctx.gateLock = new(sync.Mutex)
 	ctx.nodeName = "exampleGame"
-	ctx.auth = "12345"
+	ctx.auth = "netc0"
 	log.Println("启动游戏")
 
 	go runRPCServer(&ctx)

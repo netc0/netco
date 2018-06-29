@@ -16,6 +16,7 @@ type AppArgs struct  {
 	RPCHost string
 
 	TCPHost string
+	UDPHost string
 }
 
 var (
@@ -29,6 +30,7 @@ func parseArgs() {
 	flag.StringVar(&appArgs.RPCHost, "r", ":9002", "RPC Host")
 
 	flag.StringVar(&appArgs.TCPHost, "t", ":9000", "TCP Host")
+	flag.StringVar(&appArgs.UDPHost, "u", ":9001", "TCP Host")
 	flag.Parse()
 }
 
@@ -41,6 +43,7 @@ func processArgs() {
 
 func setupFrontend(config* modle.FrontendConfig) {
 	config.TCPHost = ":9000"
+	config.UDPHost = ":9001"
 }
 func setupBackend(config* modle.BackendConfig) {
 	config.Host = appArgs.RPCHost
@@ -61,6 +64,7 @@ func startApp () {
 	//services.StartEventService(instance) // 事件服务
 	frontend.StartFrontendSerice(&frontendConfig) // 前端服务
 	frontend.SetDispatchBackendCallback(DispatchBackend)
+
 	backend.StartBackendService(&context, &backendConfig, getSessionCallback) // 后端服务
 	context.Start()
 }
