@@ -3,6 +3,7 @@ package netco
 import (
 	"encoding/json"
 	"log"
+	"hash/crc32"
 )
 
 type simpleMessage struct{
@@ -20,4 +21,28 @@ func BuildSimpleMessage(code int, msg string) []byte {
 	}
 	log.Println(string(b))
 	return b
+}
+
+func BuildPushPacket(route string, data []byte) []byte{
+	if data == nil { data = make([]byte, 0)}
+	var result = make([]byte, 8)
+	var bodyLen = 4 + uint32(len(data))
+
+	Type := 5 //推送消息
+	var routeId uint32
+	routeId = crc32.ChecksumIEEE([]byte(route))
+
+	result[0] = byte(Type)
+	result[1] = byte(bodyLen >> 16)
+	result[2] = byte(bodyLen >> 8)
+	result[3] = byte(bodyLen >> 0)
+
+	result[4] = byte(routeId >> 24)
+	result[5] = byte(routeId >> 16)
+	result[6] = byte(routeId >> 8)
+	result[7] = byte(routeId >> 0)
+
+	result = append(result, data...)
+
+	return result
 }
