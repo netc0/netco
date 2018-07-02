@@ -1,4 +1,4 @@
-package nrpc
+package netco
 
 import (
 	"net"

@@ -1,4 +1,4 @@
-package connector
+package netco
 
 type PacketReader struct {
 	buffer    []byte

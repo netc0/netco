@@ -1,14 +1,12 @@
-package app
+package netco
 
 import (
-	"github.com/netc0/netco/events"
 	"time"
 	"log"
-	"github.com/netc0/netco/nrpc"
 )
 
 type App struct {
-	EventDispatcher *events.EventDispatcher
+	EventDispatcher *EventDispatcher
 
 	aRPCHost        string
 	aRPCHandler     interface{}
@@ -18,7 +16,7 @@ type App struct {
 func NewApp() App {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	var app App
-	app.EventDispatcher = events.NewEventDispatcher()
+	app.EventDispatcher = NewEventDispatcher()
 
 	return app
 }
@@ -26,7 +24,7 @@ func NewApp() App {
 func (this *App) startRPCServer() {
 	if this.aRPCHost == "" {return}
 
-	nrpc.RPCServerStart(this.aRPCHost, this.aRPCHandler)
+	RPCServerStart(this.aRPCHost, this.aRPCHandler)
 }
 
 func (this *App) SetRPCServerHost(RPCHost string, RPCHandler interface{}) {

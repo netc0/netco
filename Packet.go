@@ -1,4 +1,4 @@
-package connector
+package netco
 
 import "hash/crc32"
 

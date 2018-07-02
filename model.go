@@ -1,4 +1,4 @@
-package nrpc
+package netco
 
 type RPCAddRouteInfo struct {
 	RCPRemote  string
