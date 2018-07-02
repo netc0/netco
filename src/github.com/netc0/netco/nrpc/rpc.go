@@ -13,7 +13,7 @@ func RPCServerStart(host string, rscv interface{}) error {
 		return err
 	}
 	rpc.Register(rscv)
-	log.Println("RPCServerStart On:", host)
+	log.Println("Frontend启动 RPC:", host)
 	go func() {
 		for {
 			c, err := ln.Accept()

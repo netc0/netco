@@ -32,7 +32,7 @@ func (this *Transporter) checkHeartBeat() {
 	})
 
 	for _, s := range die{
-		log.Println("session:", s, "失去心跳")
+		log.Println("session:", s.GetId(), "失去心跳")
 		s.Kick()  // 踢下线
 		s.Close() //关闭
 	}

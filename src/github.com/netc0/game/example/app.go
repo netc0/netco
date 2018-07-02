@@ -78,6 +78,7 @@ func gateHeartBeat(context *ExampleContext) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags|log.Lshortfile)
 	var ctx ExampleContext
 	ctx.gateLock = new(sync.Mutex)
 	ctx.nodeName = "exampleGame"

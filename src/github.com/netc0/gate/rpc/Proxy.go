@@ -64,6 +64,11 @@ func (this *GateProxy) Reply(info nrpc.RPCGateResponse, reply* int) error {
 	return this.reply(info)
 }
 
+// RPC Push
+func (this *GateProxy) Push(info nrpc.RPCGatePush, reply* int) error {
+	return this.push(info)
+}
+
 // 通用消息
 func (this *GateProxy) OnMessage(info nrpc.RPCMessage, reply* int) error {
 	return this.onMessage(info)
@@ -127,7 +132,7 @@ func (this *GateProxy) reply(info nrpc.RPCGateResponse) error {
 	return nil
 
 }
-func (this *GateProxy) push(info nrpc.RPCGateResponse) error {
+func (this *GateProxy) push(info nrpc.RPCGatePush) error {
 	var s = this.getSession(info.ClientId)
 	session, ok := s.(frontend.ISession)
 
@@ -137,8 +142,9 @@ func (this *GateProxy) push(info nrpc.RPCGateResponse) error {
 	if session == nil {
 		return errors.New("Client session not found.")
 	}
-	//session.Push(connector.PacketType_PUSH, info.Data)
+
 	session.Push(info.Data)
+
 	return nil
 }
 
@@ -193,12 +199,12 @@ func (this *GateProxy) onMessage(msg nrpc.RPCMessage) error {
 	}
 	if msg.Command == 1 { // 会话关闭时需要通知我
 		sid := string(msg.Value)
-		log.Println("如果", sid, "关闭了 请告诉我")
+		log.Println("如果", sid, "关闭了 请告诉我", msg.ResponseNodeName)
 
 		session := frontend.GetSession(sid)
 		if session != nil {
 			session.AddCloseEventListener(func(session frontend.ISession) {
-				log.Println("会话关闭啦..........")
+				log.Println("会话" + sid + "关闭啦")
 				backend := this.getBackend(msg.ResponseNodeName)
 				if backend != nil {
 					var req nrpc.RPCMessage

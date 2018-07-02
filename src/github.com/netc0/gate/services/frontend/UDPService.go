@@ -19,7 +19,7 @@ func (this *UDPTransporter) start() {
 		log.Println("启动 UDP 失败", err)
 		return
 	}
-	log.Println("Frontend启动 TCP:", this.Host)
+	log.Println("Frontend启动 UDP:", this.Host)
 	defer conn.Close()
 
 	for {
@@ -50,4 +50,5 @@ func (this *UDPTransporter) handleClient(conn *net.UDPConn) {
 	}
 	psession = GetSession(remoteAddr.String())
 	psession.HandleBytes(data[:n])
+	psession.updateHeartBeat() // 更新心跳
 }

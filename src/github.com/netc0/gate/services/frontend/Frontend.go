@@ -96,7 +96,7 @@ func ForeachSession(callback func(session ISession)) {
 		callback(v)
 	}
 }
-// 添加会话
+// 添加会话Frontend启动
 func AddSession(inst interface{}) {
 	sessionMutex.Lock()
 	defer sessionMutex.Unlock()
@@ -115,9 +115,9 @@ func AddSession(inst interface{}) {
 func RemoveSession(inst interface{}) {
 	sessionMutex.Lock()
 	defer sessionMutex.Unlock()
-	log.Println("Frontend关闭会话", inst)
 	session, ok := inst.(ISession)
 	if ok {
+		log.Println("Frontend 关闭会话", session.GetId())
 		delete(sessions, session.GetId())
 	}
 }

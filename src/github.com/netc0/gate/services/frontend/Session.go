@@ -26,6 +26,7 @@ type ISession interface {
 
 	GetOwner() interface{} // 获取 owner
 	SetOwner(interface{})  // 设置 owner
+	updateHeartBeat()      // 更新心跳
 
 	AddCloseEventListener(func(session ISession))
 }
@@ -81,7 +82,17 @@ func (this *Session)Response(requestId uint32, r[]byte){
 	this.send(data) // 必须回应SYN
 }
 // 推送数据
-func (this *Session)Push([]byte){}
+func (this *Session)Push(data []byte){
+	switch t := this.holder.(type){
+	default:
+		log.Println("Unknow session", this.holder)
+	case TCPSession:
+		t.send(data)
+		break
+	case UDPSession:
+		t.send(data)
+	}
+}
 // 踢下线
 func (this *Session)Kick(){}
 // 是否心跳超时
@@ -183,7 +194,6 @@ func (this* UDPSession) send(data[]byte) {
 		log.Println("udp write", b, err)
 	}
 }
-
 // 获取 owner
 func (this* Session) GetOwner() interface{} {
 	return this.owner
@@ -191,4 +201,8 @@ func (this* Session) GetOwner() interface{} {
 // 设置 owner
 func (this* Session) SetOwner(owner interface{}) {
 	this.owner = owner
+}
+// 更新心跳
+func (this* Session) updateHeartBeat() {
+	this.time = time.Now()
 }

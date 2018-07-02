@@ -1,5 +1,7 @@
 package connector
 
+import "hash/crc32"
+
 // 状态数据
 const (
 	// session 状态
@@ -56,6 +58,30 @@ func PacketResponseToBinary(Type int, requstId uint32, data []byte) []byte{
 	result[5] = byte(requstId >> 16)
 	result[6] = byte(requstId >> 8)
 	result[7] = byte(requstId >> 0)
+
+	result = append(result, data...)
+
+	return result
+}
+
+func PacketPushToBinary(route string, data []byte) []byte{
+	if data == nil { data = make([]byte, 0)}
+	var result = make([]byte, 8)
+	var bodyLen = 4 + uint32(len(data))
+
+	Type := PacketType_PUSH //推送消息
+	var routeId uint32
+	routeId = crc32.ChecksumIEEE([]byte(route))
+
+	result[0] = byte(Type)
+	result[1] = byte(bodyLen >> 16)
+	result[2] = byte(bodyLen >> 8)
+	result[3] = byte(bodyLen >> 0)
+
+	result[4] = byte(routeId >> 24)
+	result[5] = byte(routeId >> 16)
+	result[6] = byte(routeId >> 8)
+	result[7] = byte(routeId >> 0)
 
 	result = append(result, data...)
 
