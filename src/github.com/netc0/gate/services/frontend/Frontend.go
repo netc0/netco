@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"github.com/netc0/netco/connector"
 	"github.com/netc0/gate/modle"
 	"sync"
 	"log"
@@ -14,9 +13,6 @@ func (this* TCPSession) IsOk() bool {
 }
 
 var (
-	allSessions map[string]*connector.Session
-	tcp TCPTransporter
-
 	sessions map[string]ISession
 	sessionMutex *sync.Mutex
 	DispatchBackendCallback func(s interface{}, requestId uint32, routeId uint32, data []byte)
@@ -35,8 +31,6 @@ type UDPTransporter struct {
 
 // 启动前端服务
 func StartFrontendSerice(config* modle.FrontendConfig) {
-	allSessions = make(map[string]*connector.Session)
-
 	sessions = make(map[string]ISession)
 	sessionMutex = new(sync.Mutex)
 
