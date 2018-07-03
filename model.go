@@ -29,10 +29,11 @@ type RPCGatePush struct {
 
 /// 后端模型
 type RPCBackendInfo struct {
-	Name string
+	AuthCode    string
+	Name       string
 	RCPRemote  string
-	Routes []string
-	Auth      string
+	Routes     []string
+	Auth       string
 }
 
 // RPC 消息
