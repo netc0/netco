@@ -2,9 +2,7 @@ package netco
 
 import (
 	"net/rpc"
-	"log"
 	"errors"
-	"fmt"
 )
 
 type backendInfo struct {
@@ -27,22 +25,22 @@ func GateConnect(gateHost string, gateAuth string, node string, backend string, 
 		return result, errors.New("Node Name Is Nil")
 	}
 
-	var be backendInfo
+	//var be backendInfo
 
-	log.Println("connect:", info.AuthCode)
-	cli, err := RPCClientConnect(gateHost)
-	if err != nil {
-		return result, err
-	}
-	be.gateRPC = cli
-
-	reply := 0
-	rs := cli.Call("GateProxy.RegisterBackend", info, &reply)
-	if rs != nil {
-		log.Println("GateProxy reply:", rs)
-		return result, errors.New(fmt.Sprintf("%v", rs))
-	}
-	result = &be
+	//log.Println("connect:", info.AuthCode)
+	//cli, err := RPCClientConnect(gateHost)
+	//if err != nil {
+	//	return result, err
+	//}
+	//be.gateRPC = cli
+	//
+	//reply := 0
+	//rs := cli.Call("GateProxy.RegisterBackend", info, &reply)
+	//if rs != nil {
+	//	log.Println("GateProxy reply:", rs)
+	//	return result, errors.New(fmt.Sprintf("%v", rs))
+	//}
+	//result = &be
 	return result, nil
 }
 
