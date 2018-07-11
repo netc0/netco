@@ -7,8 +7,9 @@ const (
 	Mail_RequestData
 	Mail_ResponseData
 	Mail_PushData
+	Mail_ClientLeaveNotifyMe
+	Mail_ClientLeaveNotification
 )
-
 
 type MailOffice struct {
 	Address string
@@ -22,8 +23,10 @@ type MailRoutineInfo struct {
 
 type MailClientData struct {
 	ClientId  string
-	IsRequest bool
+	Type      uint32 // 0 是request消息
 	RequestId uint32
 	Route uint32
 	Data      []byte
+	SourceAddress    string
+	SourceName    string
 }
