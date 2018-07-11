@@ -14,6 +14,7 @@ type IMailBox interface {
 	SetHandler(handler MailHandler)
 	SendTo(string, *Mail) error
 	Connect(string) error
+	Remove(string)
 }
 
 func NewMailBox (address string) IMailBox {
@@ -137,6 +138,15 @@ func (this *xMailBox) handleConnection(conn net.Conn) {
 	}
 }
 
+// 移除节点
+func (this *xMailBox) Remove(remote string) {
+	v, _ := this.getRoutine(remote, false)
+	if v != nil {
+		v.isRunning = false
+		delete(this.routines, remote)
+	}
+}
+
 // 发送
 func (this *xRoutine) Send(mail *Mail) error {
 	var protocol mailProtocol
@@ -177,5 +187,4 @@ func (this *xRoutine) SendHeartBeat() {
 			}
 		}
 	}
-
 }
