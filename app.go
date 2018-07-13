@@ -48,7 +48,7 @@ var (
 //}
 
 // 初始化
-func (this *App) Init() {
+func (this *App) init() {
 	this.services = make(map[string]def.IService)
 	this.isRunning = false
 	logger.Prefix("[app] ")
@@ -56,6 +56,7 @@ func (this *App) Init() {
 
 // 开始启动
 func (this *App) Run() {
+	this.init()
 	runtime.GC()
 	// 监听消息
 	this.signal = make(chan os.Signal)

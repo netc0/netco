@@ -13,7 +13,9 @@ type IMailBox interface {
 	Stop()
 	SetHandler(handler MailHandler)
 	SendTo(string, *Mail) error
+	SendToGate(*Mail) error
 	Connect(string) error
+	ConnectGate(string) error
 	Remove(string)
 }
 
@@ -40,6 +42,7 @@ type xMailBox struct {
 	isRunning bool
 	handler MailHandler
 	protocol mailProtocol
+	gateAddress string
 
 	routines map[string] *xRoutine
 }
@@ -76,7 +79,7 @@ func (this *xMailBox) Stop(){
 func (this *xMailBox) SetHandler(handler MailHandler) {
 	this.handler = handler
 }
-// SendTo
+// SendTo 发送到某个节点
 func (this *xMailBox) SendTo(remote string, mail *Mail) error {
 	var r *xRoutine
 	var err error
@@ -86,10 +89,21 @@ func (this *xMailBox) SendTo(remote string, mail *Mail) error {
 	return err
 }
 
+func (this * xMailBox) SendToGate(mail* Mail) error {
+	return this.SendTo(this.gateAddress, mail)
+}
+
+
 // 连接到远程
 func (this* xMailBox) Connect(r string) error {
 	_, err := this.getRoutine(r, true)
 	return err
+}
+
+// 连接到远程
+func (this* xMailBox) ConnectGate(r string) error {
+	this.gateAddress = r
+	return this.Connect(this.gateAddress)
 }
 
 // 获取路径
@@ -151,6 +165,10 @@ func (this *xMailBox) Remove(remote string) {
 func (this *xRoutine) Send(mail *Mail) error {
 	var protocol mailProtocol
 	data := protocol.encode(mail)
+	if data == nil {return nil}
+	if this.conn == nil {
+		return errors.New("connection disconnected.")
+	}
 	_, err := this.conn.Write(data)
 	return err
 }
@@ -162,7 +180,9 @@ func (this *xRoutine) Connect() error {
 	}
 	this.conn = c
 	this.isRunning = true
-	this.parent.handler.OnRoutineConnected(this.remote)
+	if this.parent != nil && this.parent.handler != nil {
+		this.parent.handler.OnRoutineConnected(this.remote)
+	}
 	go this.SendHeartBeat()
 	return nil
 }
@@ -183,7 +203,9 @@ func (this *xRoutine) SendHeartBeat() {
 		}
 		if err := this.Send(&m); err != nil {
 			if e:=this.Connect(); e != nil {
-				this.parent.handler.OnRoutineDisconnect(this.remote, e)
+				if this.parent != nil && this.parent.handler != nil {
+					this.parent.handler.OnRoutineDisconnect(this.remote, e)
+				}
 			}
 		}
 	}
