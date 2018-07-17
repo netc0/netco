@@ -20,6 +20,14 @@ type IApp interface {
 	RemoveEvent(id int)
 	// service
 	RegisterService(name string, srv def.IService)
+
+	// base info
+	GetNodeName() string
+	GetNodeAddress() string
+	GetGateAddress() string
+	SetNodeName(string)
+	SetNodeAddress(string)
+	SetGateAddress(string)
 }
 
 type App struct {
@@ -33,19 +41,15 @@ type App struct {
 
 	services map[string]def.IService
 	isRunning bool
+
+	mName string
+	mAddress string
+	mGateAddress string
 }
 
 var (
 	logger = common.GetLogger()
 )
-
-//func NewApp() App {
-//	log.SetFlags(log.LstdFlags | log.Lshortfile)
-//	var app App
-//	app.eventDispatcher = NewEventDispatcher()
-//
-//	return app
-//}
 
 // 初始化
 func (this *App) init() {
@@ -87,22 +91,6 @@ func (this *App) Run() {
 
 	this.Derived.OnDestroy() // 回调 OnDestroy
 }
-//
-//func (this *App) startRPCServer() {
-//	if this.aRPCHost == "" {return}
-//
-//	RPCServerStart(this.aRPCHost, this.aRPCHandler)
-//}
-//
-//func (this *App) SetRPCServerHost(RPCHost string, RPCHandler interface{}) {
-//	this.aRPCHost = RPCHost
-//	this.aRPCHandler = RPCHandler
-//}
-//
-//func (this *App) Start () {
-//	go this.startRPCServer()
-//	log.Println("App启动完成")
-//}
 
 // 发送消息
 func (this *App) DispatchEvent(name string, obj interface{}) {
@@ -130,4 +118,27 @@ func (this *App) RegisterService(name string, srv def.IService) {
 	if this.isRunning {
 		srv.OnStart() // 已经启动 直接运行
 	}
+}
+
+// 节点名称
+func (this *App) GetNodeName() string{
+	return this.mName
+}
+func (this *App) SetNodeName(n string) {
+	this.mName = n
+}
+
+// 节点地址
+func (this *App) GetNodeAddress() string{
+	return this.mAddress
+}
+func (this *App) SetNodeAddress(n string) {
+	this.mAddress = n
+}
+// 网关地址
+func (this *App) GetGateAddress() string{
+	return this.mGateAddress
+}
+func (this *App) SetGateAddress(n string) {
+	this.mGateAddress = n
 }

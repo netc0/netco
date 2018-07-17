@@ -107,8 +107,11 @@ func (this* xMailBox) ConnectGate(r string) error {
 }
 
 // 获取路径
-func (this* xMailBox) getRoutine(remote string, connect bool) (*xRoutine, error){
-	if this.routines[remote] == nil { // 创建mail路径
+func (this* xMailBox) getRoutine(remote string, connect bool) (*xRoutine, error) {
+	var item *xRoutine
+	item = this.routines[remote]
+
+	if item == nil || item.conn == nil { // 创建mail路径
 		if connect {
 			var routine xRoutine
 			routine.remote = remote
@@ -121,6 +124,7 @@ func (this* xMailBox) getRoutine(remote string, connect bool) (*xRoutine, error)
 			return nil, errors.New("routine not exist")
 		}
 	}
+
 	return this.routines[remote], nil
 }
 

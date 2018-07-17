@@ -1,5 +1,7 @@
 package def
 
+import "errors"
+
 const (
 	Mail_Heartbeat = iota
 	Mail_Reg
@@ -9,9 +11,10 @@ const (
 	Mail_PushData
 	Mail_ClientLeaveNotifyMe
 	Mail_ClientLeaveNotification
+	Mail_ClientNotFound
 )
 
-type MailOffice struct {
+type MailNodeInfo struct {
 	Address string
 	Name    string
 }
@@ -21,12 +24,24 @@ type MailRoutineInfo struct {
 	Routes []uint32
 }
 
-type MailClientData struct {
+type MailClientInfo struct {
 	ClientId  string
 	Type      uint32 // 0 是request消息
 	RequestId uint32
 	Route uint32
 	Data      []byte
+
+	RemoteAddress    string
 	SourceAddress    string
 	SourceName    string
+}
+
+func CastMailClientInfo(obj interface{}) (MailClientInfo, error) {
+	var result MailClientInfo
+	switch t := obj.(type) {
+	default:
+		return result, errors.New("Cast To MailClientInfo Failed.")
+	case MailClientInfo:
+		return t, nil
+	}
 }
