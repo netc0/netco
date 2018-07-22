@@ -112,8 +112,7 @@ func (this *EventDispatcher) RemoveEventListener (id int) bool {
 
 // 是否包含某个事件
 func (this *EventDispatcher) HasEventListener(eventType string) bool {
-	this.listenerMutex.Lock()
-	defer this.listenerMutex.Unlock()
+
 	for _, saver := range this.savers {
 		if saver.Type == eventType {
 			return true;
@@ -140,6 +139,7 @@ func (this *EventDispatcher) DispatchEvent(event Event) bool {
 	this.listenerMutex.Unlock()
 	for _, v := range targets {
 		event.Target = this
+
 		v.Handler(event)
 	}
 

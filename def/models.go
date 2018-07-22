@@ -28,6 +28,7 @@ type MailClientInfo struct {
 	ClientId  string
 	Type      uint32 // 0 是request消息
 	RequestId uint32
+	StatusCode uint32
 	Route uint32
 	Data      []byte
 

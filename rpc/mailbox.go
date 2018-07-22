@@ -6,6 +6,7 @@ import (
 	"io"
 	"errors"
 	"time"
+	"fmt"
 )
 
 type IMailBox interface {
@@ -73,6 +74,12 @@ func (this *xMailBox) Start () {
 // Stop
 func (this *xMailBox) Stop(){
 	this.isRunning = false
+	if this.routines != nil {
+		for _, v := range this.routines {
+			v.conn.Close()
+		}
+		this.routines = nil
+	}
 }
 
 // SetHandler
@@ -86,7 +93,7 @@ func (this *xMailBox) SendTo(remote string, mail *Mail) error {
 	if r, err = this.getRoutine(remote, true); err == nil {
 		return r.Send(mail)
 	}
-	return err
+	return errors.New(fmt.Sprintf("(%v) not exist", remote))
 }
 
 func (this * xMailBox) SendToGate(mail* Mail) error {
@@ -139,6 +146,8 @@ func (this *xMailBox) handleConnection(conn net.Conn) {
 
 			}
 			break
+			this.isRunning = false
+			log.Fatal(err)
 		}
 		data := buf[:size]
 		mail := p.handleBytes(data)
@@ -180,6 +189,7 @@ func (this *xRoutine) Send(mail *Mail) error {
 func (this *xRoutine) Connect() error {
 	c, err := net.Dial("tcp", this.remote)
 	if err != nil {
+		this.isRunning = false
 		return err
 	}
 	this.conn = c
