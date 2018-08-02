@@ -1,0 +1,32 @@
+language: go
+
+go:
+  - "1.10.2"
+
+sudo: required
+env:
+  - "PATH=/home/travis/gopath/bin:$PATH"
+
+before_install:
+  - # skip
+
+install:
+  - # skip
+
+before_script:
+  - sudo ntpdate -u time.google.com
+  - date
+
+script:
+  - echo "script"
+  - ./codecov.sh
+after_success:
+  - echo "success"
+  - bash <(curl -s https://codecov.io/bash) -t 9b68371b-ac34-4b67-9829-4e63b44051e0
+
+notifications:
+  email:
+    recipients:
+        - #
+    on_success: change
+    on_failure: always
