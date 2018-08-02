@@ -7,6 +7,7 @@ import (
 	"errors"
 	"time"
 	"fmt"
+	"sync"
 )
 
 type IMailBox interface {
@@ -46,16 +47,23 @@ type xMailBox struct {
 	gateAddress string
 
 	routines map[string] *xRoutine
+	initMutex sync.Mutex
+	needRelease bool
+	serverListener net.Listener
 }
 
 // Start
 func (this *xMailBox) Start () {
+	this.initMutex.Lock() // init mutex
 	var l, err = net.Listen("tcp", this.bindAddress)
 	if err != nil {
 		log.Println(err)
+		this.initMutex.Unlock()
 		return
 	}
 	this.isRunning = true
+	this.serverListener = l
+	this.initMutex.Unlock()
 
 	// heart beat
 	go func() {
@@ -73,6 +81,11 @@ func (this *xMailBox) Start () {
 
 // Stop
 func (this *xMailBox) Stop(){
+	this.initMutex.Lock()
+	defer this.initMutex.Unlock()
+	this.needRelease = true
+	this.serverListener.Close()
+
 	this.isRunning = false
 	if this.routines != nil {
 		for _, v := range this.routines {
@@ -213,6 +226,7 @@ func (this *xRoutine) SendHeartBeat() {
 	for range ticker.C {
 		if !this.isRunning {
 			this.inHeatbeat = false
+			log.Println("不再心跳")
 			break
 		}
 		if err := this.Send(&m); err != nil {
